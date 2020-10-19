@@ -1,4 +1,4 @@
-package sberbank_id
+package sberbankid
 
 import (
 	"math/rand"
@@ -6,11 +6,9 @@ import (
 	"time"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
+const CharsetFull = "abcdefghiklmnoprstxyzABCDEFGHIKLMNOPRSTXYZ0123456789_-"
 
-func buildUrl(portions map[string]string) string {
+func buildURL(portions map[string]string) string {
 	uv := url.Values{}
 
 	for i, v := range portions {
@@ -21,16 +19,18 @@ func buildUrl(portions map[string]string) string {
 }
 
 func generateRandomRqUID(l int) string {
+	rand.Seed(time.Now().UnixNano())
+
 	res := make([]byte, l)
 
 	for i := range res {
-		res[i] = rqUIDcharset[rand.Intn(len(rqUIDcharset))]
+		res[i] = rqUIDcharset[rand.Intn(len(rqUIDcharset))] // #nosec
 	}
 
 	return string(res)
 }
 
-func parseUrl(u, key string) (string, error) {
+func parseURL(u, key string) (string, error) {
 	values, err := url.Parse(u)
 	if err != nil {
 		return "", err
@@ -41,20 +41,26 @@ func parseUrl(u, key string) (string, error) {
 }
 
 func generateRandomString(slen int) string {
-	const charset = "abcdefghiklmnoprstxyzABCDEFGHIKLMNOPRSTXYZ0123456789_-"
+	rand.Seed(time.Now().UnixNano())
 
 	b := make([]byte, slen)
 	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
+		b[i] = CharsetFull[rand.Intn(len(CharsetFull))] // #nosec
 	}
 
 	return string(b)
 }
 
-func generateStateHash() string {
-	return generateRandomString(8)
+func generateStateHash(l int) string {
+	return generateRandomString(l)
 }
 
-func generateNonce() string {
-	return generateRandomString(16)
+func generateNonce(l int) string {
+	return generateRandomString(l)
+}
+
+func isURL(str string) bool {
+	u, err := url.Parse(str)
+
+	return err == nil && u.Scheme != "" && u.Host != ""
 }

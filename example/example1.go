@@ -2,23 +2,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/everbslab/sberbank_id"
 	"log"
+
+	"github.com/everbslab/sberbankid"
 )
 
-var SbidClientId = "012345670123abcd0123012345678901"
-var SbidClientSecret = "QWERTY"
-
 func main() {
-	sbc := sberbank_id.New(SbidClientId, SbidClientSecret, &sberbank_id.Config{
+	sbc := sberbankid.NewClient("012345670123abcd0123012345678901", "QWERTY", &sberbankid.Config{
 		Scope:       "openid name snils gender mobile inn maindoc birthdate verified",
-		RedirectUrl: "http://127.0.0.1:8080/login",
-		DebugMode:   true,
+		RedirectURL: "http://127.0.0.1:8080/login",
+		Env:         sberbankid.EnvSandbox,
+		VerboseMode: true,
 	})
 
 	// step 1
 	logInfo("---step 1-- click on sberbank id btn emulator and getting redirect location")
-	authcode, err := sbc.AuthRequest()
+	authcode, err := sbc.AuthRequest("Q0002", "Password2")
 	if err != nil {
 		log.Fatal(err)
 	}

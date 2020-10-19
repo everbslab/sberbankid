@@ -5,7 +5,7 @@ Sberbank ID client implementation.
 ## Usage
 Install module
 ```Bash
-go get github.com/everbslab/sberbank_id
+go get github.com/everbslab/sberbankid
 ```
 
 Apply in your app:
@@ -16,10 +16,11 @@ Apply in your app:
     sbc := sberbank_id.New(SbidClientId, SbidClientSecret, &sberbank_id.Config{
         Scope:       "openid name snils gender mobile inn maindoc birthdate verified",
         RedirectUrl: "http://127.0.0.1:8080/login",
-        DebugMode:   true,
+        Env:         sberbankid.EnvSandbox,
+        VerboseMode: true,
     })
 
-    authcode, err := sbc.AuthRequest()
+    authcode, err := sbc.AuthRequest("Q0002", "Password2")
     if err != nil {
         log.Fatal(err)
     }
@@ -30,7 +31,7 @@ Apply in your app:
     }
 
     if pdata, err := sbc.GetPersonalData(token); err == nil {
-        logInfo(fmt.Sprintf("**** Personal data map: %v", pdata))
+        log.Printf("**** Personal data map: %v\n", pdata)
     } else {
         log.Fatal(err)
     }

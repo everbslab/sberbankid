@@ -1,3 +1,3 @@
-module github.com/everbslab/sberbank_id
+module github.com/everbslab/sberbankid
 
 go 1.15
