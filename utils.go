@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const CharsetFull = "abcdefghiklmnoprstxyzABCDEFGHIKLMNOPRSTXYZ0123456789_-"
+const charsetFull = "abcdefghiklmnoprstxyzABCDEFGHIKLMNOPRSTXYZ0123456789_-"
 
 func buildURL(portions map[string]string) string {
 	uv := url.Values{}
@@ -45,7 +45,7 @@ func generateRandomString(slen int) string {
 
 	b := make([]byte, slen)
 	for i := range b {
-		b[i] = CharsetFull[rand.Intn(len(CharsetFull))] // #nosec
+		b[i] = charsetFull[rand.Intn(len(charsetFull))] // #nosec
 	}
 
 	return string(b)

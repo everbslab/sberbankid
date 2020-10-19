@@ -24,18 +24,20 @@ const (
 	nonceHashSize = 16 // randomly generated nonce hash length
 
 	// API endpoints URIs.
-	AuthorizeAccessTokenURI = "/CSAFront/oidc/sberbank_id/authorize.do" // #nosec
-	TokenAuthorizeURI       = "/ru/prod/tokens/v2/oidc"                 // #nosec
-	PersonalDataURI         = "/ru/prod/sberbankid/v2.1/userInfo"       // #nosec
+	authorizeAccessTokenURI = "/CSAFront/oidc/sberbank_id/authorize.do" // #nosec
+	tokenAuthorizeURI       = "/ru/prod/tokens/v2/oidc"                 // #nosec
+	personalDataURI         = "/ru/prod/sberbankid/v2.1/userInfo"       // #nosec
 
 	// Endpoints for environments: urls.
-	EndpointDev     = "https://dev.api.sberbank.ru/"
-	EndpointProd    = "https://sec.api.sberbank.ru"
-	EndpointSandbox = "http://45.12.238.224:8181"
+	endpointDev     = "https://dev.api.sberbank.ru/"
+	endpointProd    = "https://sec.api.sberbank.ru"
+	endpointSandbox = "http://45.12.238.224:8181"
 
-	// Environment options.
+	// EnvSandbox Sandbox environment.
 	EnvSandbox Environment = 1 << iota
+	// EnvDev DEV environment.
 	EnvDev
+	// EnvProd PROD environment.
 	EnvProd
 )
 
@@ -115,7 +117,7 @@ func (c *Client) GetToken(authcode string) (*TokenResponse, error) {
 		"client_secret": c.creds.ClientSecret,
 	}
 
-	url, err := c.GetEnvURL(TokenAuthorizeURI)
+	url, err := c.getEnvURL(tokenAuthorizeURI)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +177,7 @@ func (c *Client) AuthRequest(login, pass string) (string, error) {
 		return "", err
 	}
 
-	url, err := c.GetEnvURL(AuthorizeAccessTokenURI + "?" + buildURL(queryMap))
+	url, err := c.getEnvURL(authorizeAccessTokenURI + "?" + buildURL(queryMap))
 	if err != nil {
 		return "", err
 	}
@@ -218,7 +220,7 @@ func (c *Client) AuthRequest(login, pass string) (string, error) {
 }
 
 func (c *Client) GetPersonalData(token *TokenResponse) (*PersonData, error) {
-	url, err := c.GetEnvURL(PersonalDataURI)
+	url, err := c.getEnvURL(personalDataURI)
 	if err != nil {
 		return nil, err
 	}
@@ -257,11 +259,11 @@ func (c *Client) GetPersonalData(token *TokenResponse) (*PersonData, error) {
 	return &pd, nil
 }
 
-func (c *Client) GetEnvURL(uri string) (string, error) {
+func (c *Client) getEnvURL(uri string) (string, error) {
 	envMap := map[Environment]string{
-		EnvDev:     EndpointDev,
-		EnvSandbox: EndpointSandbox,
-		EnvProd:    EndpointProd,
+		EnvDev:     endpointDev,
+		EnvSandbox: endpointSandbox,
+		EnvProd:    endpointProd,
 	}
 
 	if endpoint, ok := envMap[c.config.Env]; ok {
