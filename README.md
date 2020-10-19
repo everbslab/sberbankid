@@ -1,13 +1,17 @@
 # Sberbank ID
 
-Sberbank ID client implementation.
+Sberbank ID implementation.
 
-## Usage
-Install module
+## Project status
+[![Go Report Card](https://goreportcard.com/badge/github.com/everbslab/sberbankid)](https://goreportcard.com/report/github.com/everbslab/sberbankid)
+[![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
+
+## Install
 ```Bash
 go get github.com/everbslab/sberbankid
 ```
 
+## Usage
 Apply in your app:
 ```Go
     var (
@@ -15,7 +19,7 @@ Apply in your app:
         SbidClientSecret = "Q....Y"                 // your client secret
     )
 
-    sbc := sberbankid.New(SbidClientId, SbidClientSecret, &sberbank_id.Config{
+    sbc := sberbankid.NewClient(SbidClientId, SbidClientSecret, &sberbank_id.Config{
         Scope:       "openid name snils gender mobile inn maindoc birthdate verified",
         RedirectUrl: "http://127.0.0.1:8080/login",
         Env:         sberbankid.EnvSandbox,
