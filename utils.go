@@ -6,7 +6,10 @@ import (
 	"time"
 )
 
-const charsetFull = "abcdefghiklmnoprstxyzABCDEFGHIKLMNOPRSTXYZ0123456789_-"
+const (
+	rqUIDcharset = "abcdefABCDEF0123456789"
+	charsetFull  = "abcdefghiklmnoprstxyzABCDEFGHIKLMNOPRSTXYZ0123456789_-"
+)
 
 func buildURL(portions map[string]string) string {
 	uv := url.Values{}
@@ -49,14 +52,6 @@ func generateRandomString(slen int) string {
 	}
 
 	return string(b)
-}
-
-func generateStateHash(l int) string {
-	return generateRandomString(l)
-}
-
-func generateNonce(l int) string {
-	return generateRandomString(l)
 }
 
 func isURL(str string) bool {

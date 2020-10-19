@@ -10,10 +10,12 @@ go get github.com/everbslab/sberbankid
 
 Apply in your app:
 ```Go
-    var SbidClientId = "0123456.....12345678901"
-    var SbidClientSecret = "Q....Y"
+    var (
+        SbidClientId = "0123456.....12345678901"    // yours client id
+        SbidClientSecret = "Q....Y"                 // your client secret
+    )
 
-    sbc := sberbank_id.New(SbidClientId, SbidClientSecret, &sberbank_id.Config{
+    sbc := sberbankid.New(SbidClientId, SbidClientSecret, &sberbank_id.Config{
         Scope:       "openid name snils gender mobile inn maindoc birthdate verified",
         RedirectUrl: "http://127.0.0.1:8080/login",
         Env:         sberbankid.EnvSandbox,

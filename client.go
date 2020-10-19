@@ -18,7 +18,6 @@ var (
 )
 
 const (
-	rqUIDcharset  = "abcdefABCDEF0123456789"
 	rqUIDsize     = 32 // RqUID constant length
 	stateHashSize = 8  // randomly generated state hash length
 	nonceHashSize = 16 // randomly generated nonce hash length
@@ -30,7 +29,7 @@ const (
 
 	// Endpoints for environments: urls.
 	endpointDev     = "https://dev.api.sberbank.ru/"
-	endpointProd    = "https://sec.api.sberbank.ru"
+	endpointProd    = "https://open.api.sberbank.ru"
 	endpointSandbox = "http://45.12.238.224:8181"
 
 	// EnvSandbox Sandbox environment.
@@ -95,8 +94,8 @@ func NewClient(clientID, clientSecret string, config *Config) *Client {
 		config: &Config{
 			Scope:       config.Scope,
 			RedirectURL: config.RedirectURL,
-			state:       generateStateHash(stateHashSize),
-			nonce:       generateNonce(nonceHashSize),
+			state:       generateRandomString(stateHashSize),
+			nonce:       generateRandomString(nonceHashSize),
 			Env:         config.Env,
 			VerboseMode: config.VerboseMode,
 		},
@@ -107,6 +106,7 @@ func NewClient(clientID, clientSecret string, config *Config) *Client {
 	}
 }
 
+// GetToken requests by API Token.
 func (c *Client) GetToken(authcode string) (*TokenResponse, error) {
 	rm := map[string]string{
 		"grant_type":    "authorization_code",
@@ -156,6 +156,7 @@ func (c *Client) GetToken(authcode string) (*TokenResponse, error) {
 	return tr, nil
 }
 
+// AuthRequest performs logging to Sberbank's endpoint to fetch Auth code.
 func (c *Client) AuthRequest(login, pass string) (string, error) {
 	userCredMap := map[string]string{
 		"login":    login,
@@ -219,6 +220,7 @@ func (c *Client) AuthRequest(login, pass string) (string, error) {
 	return "", errAuthRequest
 }
 
+// GetPersonalData fetches customer personal data using TokenResponse.
 func (c *Client) GetPersonalData(token *TokenResponse) (*PersonData, error) {
 	url, err := c.getEnvURL(personalDataURI)
 	if err != nil {
@@ -230,11 +232,12 @@ func (c *Client) GetPersonalData(token *TokenResponse) (*PersonData, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("x-introspect-rquid", generateRandomRqUID(rqUIDsize))
+	rquid := generateRandomRqUID(rqUIDsize)
+	req.Header.Add("x-introspect-rquid", rquid)
 	req.Header.Add("X-IBM-Client-ID", c.creds.ClientID)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %v", token.AccessToken))
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("RqUID", generateRandomRqUID(rqUIDsize))
+	req.Header.Add("RqUID", rquid)
 
 	res, err := c.HTTPCient.Do(req)
 	if err != nil {
