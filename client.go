@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -23,12 +22,14 @@ const (
 	PersonalDataUrl         = "http://45.12.238.224:8181/ru/prod/sberbankid/v2.1/userInfo"
 )
 
+// SberbankIdClient represents the main struct of a client for Sbebank ID API
 type SberbankIdClient struct {
 	HttpCient *http.Client
 	creds     *SberCredentials
 	config    *Config
 }
 
+// SberCredentials is a struct to store user credentials for Sberbank ID API
 type SberCredentials struct {
 	ClientId     string
 	ClientSecret string
@@ -46,11 +47,13 @@ type TokenResponse struct {
 // PersonData represents Personal Data response. JSON formatted
 type PersonData map[string]interface{}
 
+// Config is a structure to keep instance parameters for httpClient requests
 type Config struct {
 	Scope       string
 	RedirectUrl string
 	state       string
 	nonce       string
+	DebugMode   bool
 }
 
 func New(clientId, clientSecret string, config *Config) *SberbankIdClient {
@@ -66,6 +69,7 @@ func New(clientId, clientSecret string, config *Config) *SberbankIdClient {
 			RedirectUrl: config.RedirectUrl,
 			state:       generateStateHash(),
 			nonce:       generateNonce(),
+			DebugMode:   config.DebugMode,
 		},
 		creds: &SberCredentials{
 			ClientId:     clientId,
@@ -75,15 +79,14 @@ func New(clientId, clientSecret string, config *Config) *SberbankIdClient {
 }
 
 func (c *SberbankIdClient) GetToken(authcode string) (*TokenResponse, error) {
-	fmt.Println("Getting token...")
-
-	rm := make(map[string]string)
-	rm["grant_type"] = "authorization_code"
-	rm["scope"] = c.config.Scope
-	rm["redirect_uri"] = c.config.RedirectUrl
-	rm["code"] = authcode
-	rm["client_id"] = c.creds.ClientId
-	rm["client_secret"] = c.creds.ClientSecret
+	rm := map[string]string{
+		"grant_type":    "authorization_code",
+		"scope":         c.config.Scope,
+		"redirect_uri":  c.config.RedirectUrl,
+		"code":          authcode,
+		"client_id":     c.creds.ClientId,
+		"client_secret": c.creds.ClientSecret,
+	}
 
 	req, _ := http.NewRequest("POST", TokenAuthorizeUrl, bytes.NewBufferString(buildUrl(rm)))
 	req.Header.Add("Accept", "application/json")
@@ -92,29 +95,27 @@ func (c *SberbankIdClient) GetToken(authcode string) (*TokenResponse, error) {
 	req.Header.Add("X-IBM-Client-Secret", c.creds.ClientSecret)
 	req.Header.Add("RqUID", generateRandomRqUID(rqUIDlen))
 
-	fmt.Println("--------------------")
-	fmt.Println(req)
-
 	resp, err := c.HttpCient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("--------------------")
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
 
-	tresp := &TokenResponse{}
-	if err := json.Unmarshal(body, tresp); err != nil {
-		log.Fatal(err)
+	if c.config.DebugMode {
+		fmt.Println("--------------------")
+		fmt.Println("response Status:", resp.Status)
+		fmt.Println("response Headers:", resp.Header)
+		fmt.Println("response Body:", string(body))
+	}
+
+	tr := &TokenResponse{}
+	if err := json.Unmarshal(body, &tr); err != nil {
 		return nil, err
 	}
-	log.Println(tresp)
 
-	return tresp, nil
+	return tr, nil
 }
 
 func (c *SberbankIdClient) AuthRequest() (string, error) {
@@ -123,7 +124,7 @@ func (c *SberbankIdClient) AuthRequest() (string, error) {
 		"password": "Password2",
 	}
 
-	var qparams = map[string]string{
+	var queryMap = map[string]string{
 		"response_type": "code",
 		"client_type":   "PRIVATE",
 		"scope":         c.config.Scope,
@@ -137,10 +138,8 @@ func (c *SberbankIdClient) AuthRequest() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(string(jsonCreds))
-	fmt.Println("---")
 
-	req, _ := http.NewRequest("POST", AuthorizeAccessTokenUrl+"?"+buildUrl(qparams), bytes.NewBuffer(jsonCreds))
+	req, _ := http.NewRequest("POST", AuthorizeAccessTokenUrl+"?"+buildUrl(queryMap), bytes.NewBuffer(jsonCreds))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.HttpCient.Do(req)
@@ -149,16 +148,19 @@ func (c *SberbankIdClient) AuthRequest() (string, error) {
 		return "", err
 	}
 
-	fmt.Println("req", req)
-	fmt.Println("--------------------")
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	if c.config.DebugMode {
+		fmt.Println(string(jsonCreds))
+		fmt.Println("---")
+		fmt.Println("req", req)
+		fmt.Println("--------------------")
+		fmt.Println("response Status:", resp.Status)
+		fmt.Println("response Headers:", resp.Header)
+		body, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println("response Body:", string(body))
+	}
 
 	// We need to catch code 200
 	if resp.StatusCode == http.StatusOK {
-		fmt.Println("PARSE LOCATION")
 		loc := resp.Header.Get("Location")
 		if loc != "" {
 			authCode, _ := parseUrl(resp.Header.Get("Location"), "code")
@@ -187,9 +189,17 @@ func (c *SberbankIdClient) GetPersonalData(token *TokenResponse) (*PersonData, e
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 
-	pd := make(PersonData)
-	if err := json.Unmarshal(body, &pd); err != nil {
+	if c.config.DebugMode {
+		fmt.Println(string(body))
+	}
+
+	if err != nil {
 		return nil, err
+	}
+
+	var pd PersonData
+	if err := json.Unmarshal(body, &pd); err != nil {
+		return nil, errors.New("failed to fetch personal data")
 	}
 
 	return &pd, nil

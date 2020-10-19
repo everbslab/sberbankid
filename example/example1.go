@@ -13,30 +13,35 @@ func main() {
 	sbc := sberbank_id.New(SbidClientId, SbidClientSecret, &sberbank_id.Config{
 		Scope:       "openid name snils gender mobile inn maindoc birthdate verified",
 		RedirectUrl: "http://127.0.0.1:8080/login",
+		DebugMode:   true,
 	})
 
 	// step 1
-	fmt.Println("---step 1-- click on sber id emulator and getting redirect location")
+	logInfo("---step 1-- click on sberbank id btn emulator and getting redirect location")
 	authcode, err := sbc.AuthRequest()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("**** auth code = ", authcode)
+	logInfo(fmt.Sprintf("**** auth code = %v", authcode))
 
 	// step 2
-	fmt.Println("---step 2-- get token")
+	logInfo("---step 2-- get token")
 	token, err := sbc.GetToken(authcode)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("**** token = ", authcode)
+	logInfo(fmt.Sprintf("**** token = %v", token.AccessToken))
 
 	// step 3
-	fmt.Println("---step 3-- personal data")
-	pdata, err := sbc.GetPersonalData(token)
-	if err != nil {
+	logInfo("---step 3-- personal data")
+	if pdata, err := sbc.GetPersonalData(token); err == nil {
+		logInfo(fmt.Sprintf("**** Personal data map: %v", pdata))
+	} else {
 		log.Fatal(err)
 	}
-	fmt.Printf("**** Personal data: %v", pdata)
+}
+
+func logInfo(str string) {
+	log.Println(str)
 }
