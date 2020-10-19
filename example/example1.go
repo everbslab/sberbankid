@@ -22,7 +22,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	logInfo(fmt.Sprintf("**** auth code = %v", authcode))
 
 	// step 2
